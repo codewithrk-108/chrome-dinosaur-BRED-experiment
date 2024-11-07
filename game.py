@@ -1,8 +1,11 @@
 import pygame
 import os
 import random
+import time
 pygame.init()
 pygame.mixer.init()
+
+font = pygame.font.Font('freesansbold.ttf', 30)
 
 #sound cue
 OBSTACLE_SOUND_CUE = pygame.mixer.Sound("Assets/sounds/jump.wav")
@@ -33,6 +36,12 @@ CLOUD = pygame.image.load(os.path.join("Assets/Other", "Cloud.png"))
 
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GREEN = (34, 139, 34)
+ORANGE = (255, 140, 0)
+YELLOW = (255, 255, 0)
 
 class Dinosaur:
     X_POS = 80
@@ -167,25 +176,110 @@ class Bird(Obstacle):
         self.index += 1
 
 
-def main():
-    global game_speed, x_pos_bg, y_pos_bg, points, obstacles
+# def menu(death_count):
+#     global points
+#     run = True
+#     while run:
+#         SCREEN.fill((255, 255, 255))
+
+#         if death_count == 0:
+#             text = font.render("Press any Key to Start", True, (0, 0, 0))
+#         elif death_count > 0:
+#             text = font.render("Press any Key to Restart", True, (0, 0, 0))
+#             score = font.render("Your Score: " + str(points), True, (0, 0, 0))
+#             scoreRect = score.get_rect()
+#             scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
+#             SCREEN.blit(score, scoreRect)
+#         textRect = text.get_rect()
+#         textRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+#         SCREEN.blit(text, textRect)
+#         SCREEN.blit(RUNNING[0], (SCREEN_WIDTH // 2 - 20, SCREEN_HEIGHT // 2 - 140))
+#         pygame.display.update()
+#         time.sleep(5)
+#         run=False
+#         # for event in pygame.event.get():
+#             # if event.type == pygame.QUIT:
+#                 # pygame.quit()
+#                 # run = False
+#             # if event.type == pygame.KEYDOWN:
+#                 # main()
+
+def wait_for_spacebar(game_no):
+    """Wait for the spacebar to start each game round."""
+    waiting = True
+    while waiting:
+        SCREEN.fill(BLACK)
+        text = font.render(f"Press SPACE to start the game {game_no}.", True, WHITE)
+        SCREEN.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, SCREEN_HEIGHT // 2 - text.get_height() // 2))
+        pygame.display.flip()
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    waiting = False
+
+
+def start_page():
+    title_font = pygame.font.Font(None, 74)
+    text_font = pygame.font.Font(None, 36)
+    # Fill the background
+    SCREEN.fill(YELLOW)
+    
+    # Title text
+    title_text = title_font.render("Dino Game Adventure", True, BLACK)
+    SCREEN.blit(title_text, (SCREEN_WIDTH // 2 - title_text.get_width() // 2, 50))
+    
+    # Subtitle text
+    subtitle_text = text_font.render("Test your reflexes and get ready for a fun journey!", True, GREEN)
+    SCREEN.blit(subtitle_text, (SCREEN_WIDTH // 2 - subtitle_text.get_width() // 2, 130))
+    
+    # Game description
+    description_lines = [
+        "In this game, you'll guide a little dinosaur through an obstacle-filled desert.",
+        "Jump over cacti and duck under birds to survive as long as possible!",
+    ]
+    for i, line in enumerate(description_lines):
+        description_text = text_font.render(line, True, BLACK)
+        SCREEN.blit(description_text, (SCREEN_WIDTH // 2 - description_text.get_width() // 2, 200 + i * 30))
+    
+    # Controls description
+    controls_text = [
+        "Controls:",
+        "UP Arrow Key - Jump over obstacles",
+        "DOWN Arrow Key - Duck under obstacles",
+    ]
+    for i, line in enumerate(controls_text):
+        control_text = text_font.render(line, True, ORANGE if i == 0 else BLACK)
+        SCREEN.blit(control_text, (SCREEN_WIDTH // 2 - control_text.get_width() // 2, 350 + i * 30))
+    
+    # Instruction to start
+    start_text = text_font.render("Press SPACE to Start", True, GREEN)
+    SCREEN.blit(start_text, (SCREEN_WIDTH // 2 - start_text.get_width() // 2, SCREEN_HEIGHT - 100))
+    
+    pygame.display.flip()
+
+def DINO_GAME(sound_index):
+    global game_speed, x_pos_bg, y_pos_bg, points, obstacles,font
     run = True
     clock = pygame.time.Clock()
     player = Dinosaur()
     cloud = Cloud()
-    game_speed = 20
+    game_speed = 25
     x_pos_bg = 0
     y_pos_bg = 380
     points = 0
-    font = pygame.font.Font('freesansbold.ttf', 20)
     obstacles = []
     death_count = 0
-
+    prev_time = time.time()
+    
     def score():
         global points, game_speed
         points += 1
         if points % 100 == 0:
-            game_speed += 1
+            game_speed += 2
 
         text = font.render("Points: " + str(points), True, (0, 0, 0))
         textRect = text.get_rect()
@@ -218,6 +312,13 @@ def main():
         if rect1.x + rect1.width+CUE_DISTANCE_THRESH >= rect2.x and rect1.x + rect1.width+CUE_DISTANCE_THRESH < rect2.x+30:
             return True
         return False
+    
+    def check_upcoming_collision_hoax(rect1, rect2):
+        a = random.randrange(-250,-30)
+        b = random.randrange(35,500)
+        if rect1.x + rect1.width+ a+b>= rect2.x and rect1.x + rect1.width + a+b < rect2.x+30:
+            return True
+        return False
 
     while run:
         for event in pygame.event.get():
@@ -243,50 +344,68 @@ def main():
             obstacle.update()
             
             if check_upcoming_collision(player.dino_rect,obstacle.rect):
-                OBSTACLE_SOUND_CUE.play()
-            print(player.dino_rect.x,obstacle.rect.x,obstacle.rect.width)
+                if sound_index==1:
+                    OBSTACLE_SOUND_CUE.play()
+            
+            if sound_index==3:
+                # a = (time.time()-prev_time)
+                if(random.randrange(0,75)==50):
+                    OBSTACLE_SOUND_CUE.play()
+            # print(player.dino_rect.x,obstacle.rect.x,obstacle.rect.width)
             if check_collision(player.dino_rect,obstacle.rect):
                 pygame.time.delay(2000)
                 death_count += 1
-                menu(death_count)
-
+                return -1
+                
         background()
 
         cloud.draw(SCREEN)
         cloud.update()
 
         score()
-
+        
         clock.tick(30)
         pygame.display.update()
-
-
-def menu(death_count):
-    global points
-    run = True
-    while run:
-        SCREEN.fill((255, 255, 255))
-        font = pygame.font.Font('freesansbold.ttf', 30)
-
-        if death_count == 0:
-            text = font.render("Press any Key to Start", True, (0, 0, 0))
-        elif death_count > 0:
-            text = font.render("Press any Key to Restart", True, (0, 0, 0))
-            score = font.render("Your Score: " + str(points), True, (0, 0, 0))
-            scoreRect = score.get_rect()
-            scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
-            SCREEN.blit(score, scoreRect)
-        textRect = text.get_rect()
-        textRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
-        SCREEN.blit(text, textRect)
-        SCREEN.blit(RUNNING[0], (SCREEN_WIDTH // 2 - 20, SCREEN_HEIGHT // 2 - 140))
-        pygame.display.update()
+        
+def play_game(round_number):
+    """Main game logic for each round. Customize this function with your game code."""
+    DINO_GAME(round_number)        
+        
+def main():
+    # Play games in 3 parts, with 2 games each
+    total_games = 6
+    games_per_part = 2
+    cntr=1
+    
+    L1 = [1,2,3]
+    L2= [2,1,3]
+    random.shuffle(L1)
+    random.shuffle(L2)
+    sound_order = L1 + L2 
+    print(sound_order)
+    # Main loop for START PAGE
+    running = True
+    while running:
+        start_page()
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                run = False
-            if event.type == pygame.KEYDOWN:
-                main()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    running = False  # Exit start page and proceed to game
 
+    for part in range(1, (total_games // games_per_part) + 1):
+        for game_round in range((part - 1) * games_per_part + 1, part * games_per_part + 1):
+            wait_for_spacebar(cntr)
+            play_game(sound_order[cntr-1])
+            cntr+=1
+        print(f"Part {part} complete")
 
-menu(death_count=0)
+    print("All parts completed!")
+    pygame.quit()
+
+# Run the game
+if __name__ == "__main__":
+    main()
