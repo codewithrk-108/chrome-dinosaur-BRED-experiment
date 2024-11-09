@@ -1,4 +1,5 @@
 import pygame
+import json
 import os
 import sys
 import random
@@ -6,11 +7,33 @@ import time
 pygame.init()
 pygame.mixer.init()
 
+
+# json file path
+JSON_FILE_PATH='data_file.json'
+with open(JSON_FILE_PATH,'r') as file:
+    data = json.load(file)
+
+idno = len(data)
+new_data = {
+    str(idno) : {
+        "Name" : "",
+        "Age" : "",
+        "Email_id": "",
+        "Rating_Chrome_Dino_Game":0,
+        "Game_End_Time":[],
+        "Score":[],
+        "REACTION_TIME_AUDIO_CUE":[],
+        "REACTION_TIME_VISUAL_CUE":[]
+    }
+}
+
 font = pygame.font.Font('freesansbold.ttf', 30)
 
 #sound cue
 OBSTACLE_SOUND_CUE = pygame.mixer.Sound("Assets/sounds/jump.wav")
 CUE_DISTANCE_THRESH = 300
+REACTION_TIME_VISUAL_CUE=0
+REACTION_TIME_AUDIO_CUE=0
 
 # Global Constants
 SCREEN_HEIGHT = 600
@@ -44,6 +67,9 @@ BLACK = (0, 0, 0)
 GREEN = (34, 139, 34)
 ORANGE = (255, 140, 0)
 YELLOW = (255, 255, 0)
+GRAY = (200, 200, 200)
+BLUE = (0, 0, 255)
+RED = (255, 0, 0)
 
 class Dinosaur:
     X_POS = 80
@@ -106,6 +132,19 @@ class Dinosaur:
         self.step_index += 1
 
     def jump(self):
+        global REACTION_TIME_AUDIO_CUE,REACTION_TIME_VISUAL_CUE,new_data
+        
+        
+        if(REACTION_TIME_AUDIO_CUE!=-1):
+            REACTION_TIME_AUDIO_CUE = time.time()-REACTION_TIME_AUDIO_CUE
+            new_data["REACTION_TIME_AUDIO_CUE"].append(REACTION_TIME_AUDIO_CUE)
+            REACTION_TIME_AUDIO_CUE=-1
+        if(REACTION_TIME_VISUAL_CUE!=-1):
+            REACTION_TIME_VISUAL_CUE = time.time()-REACTION_TIME_VISUAL_CUE
+            new_data["REACTION_TIME_VISUAL_CUE"].append(REACTION_TIME_VISUAL_CUE)
+            REACTION_TIME_VISUAL_CUE=-1
+        
+        # print(REACTION_TIME_VISUAL_CUE)
         self.image = self.jump_img
         if self.dino_jump:
             self.dino_rect.y -= self.jump_vel * 4
@@ -207,6 +246,107 @@ def wait_for_spacebar(game_no):
                 if event.key == pygame.K_SPACE:
                     waiting = False
 
+def pre_exp_form():
+    global new_data,idno
+    # Fonts
+    font = pygame.font.Font(None, 32)
+    small_font = pygame.font.Font(None, 24)
+
+    # Form fields and data
+    form_data = {
+        "Name": "",
+        "Age": "",
+        "Email_id": "",
+        "Rating_Chrome_Dino_Game": 0
+    }
+    active_field = None
+
+    # Rating radio buttons
+    rating_options = [1, 2, 3, 4, 5]
+    rating_pos = [(200 + i * 50, 350) for i in range(len(rating_options))]  # Increase spacing
+
+    # Input field rects
+    input_rects = {
+        "Name": pygame.Rect(200, 100, 300, 32),
+        "Age": pygame.Rect(200, 150, 300, 32),
+        "Email_id": pygame.Rect(200, 200, 300, 32),
+    }
+
+    # Helper function to draw text
+    def draw_text(text, pos, color=BLACK, font=font):
+        text_surface = font.render(text, True, color)
+        SCREEN.blit(text_surface, pos)
+
+    # Main form loop
+    running = True
+    while running:
+        SCREEN.fill(WHITE)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Check if any input field was clicked
+                for field, rect in input_rects.items():
+                    if rect.collidepoint(event.pos):
+                        active_field = field
+                        break
+                else:
+                    active_field = None
+                
+                # Check for rating selection
+                for i, pos in enumerate(rating_pos):
+                    rating_rect = pygame.Rect(pos[0] - 10, pos[1] - 10, 20, 20)
+                    if rating_rect.collidepoint(event.pos):
+                        form_data["Rating_Chrome_Dino_Game"] = rating_options[i]
+
+            elif event.type == pygame.KEYDOWN:
+                # Handle text input
+                if active_field:
+                    if event.key == pygame.K_BACKSPACE:
+                        form_data[active_field] = form_data[active_field][:-1]
+                    elif event.key == pygame.K_RETURN:
+                        active_field = None  # Move focus away on Enter
+                    else:
+                        form_data[active_field] += event.unicode
+
+        # Draw labels and input fields with more space
+        draw_text("Enter Your Details", (SCREEN_WIDTH // 2 - 80, 40), BLUE, font)
+
+        # Display fields and current input
+        y_offset = 0
+        for field, rect in input_rects.items():
+            pygame.draw.rect(SCREEN, GRAY if active_field == field else BLACK, rect, 2)
+            draw_text(f"{field}:", (rect.x - 140, rect.y + 5), BLACK, small_font)
+            draw_text(form_data[field], (rect.x + 5, rect.y + 5), BLACK, small_font)
+            y_offset += 60
+
+        # Draw rating radio buttons with labels
+        draw_text("Rate Chrome Dino Game (1-5):", (50, 300), BLACK, small_font)
+        for i, pos in enumerate(rating_pos):
+            color = RED if form_data["Rating_Chrome_Dino_Game"] == rating_options[i] else GRAY
+            pygame.draw.circle(SCREEN, color, pos, 10)
+            pygame.draw.circle(SCREEN, BLACK, pos, 10, 1)  # Border around the circle
+            draw_text(str(rating_options[i]), (pos[0] - 5, pos[1] - 25), BLACK, small_font)
+
+        # Draw a submit button
+        submit_button = pygame.Rect(SCREEN_WIDTH // 2 - 50, 400, 100, 40)
+        pygame.draw.rect(SCREEN, BLUE, submit_button)
+        draw_text("Submit", (submit_button.x + 10, submit_button.y + 5), WHITE, font)
+
+        # Check if submit button was clicked
+        if event.type == pygame.MOUSEBUTTONDOWN and submit_button.collidepoint(event.pos):
+            new_data[str(idno)] = {
+                "Name": form_data["Name"],
+                "Age": form_data["Age"],
+                "Email_id": form_data["Email_id"],
+                "Rating_Chrome_Dino_Game": form_data["Rating_Chrome_Dino_Game"]
+            }
+            running = False  # Exit the form to start the game
+
+        # Update the display
+        pygame.display.flip()
 
 def start_page():
     title_font = pygame.font.Font(None, 74)
@@ -234,8 +374,7 @@ def start_page():
     # Controls description
     controls_text = [
         "Controls:",
-        "UP Arrow Key - Jump over obstacles",
-        "DOWN Arrow Key - Duck under obstacles",
+        "UP Arrow Key - Jump over obstacles"
     ]
     for i, line in enumerate(controls_text):
         control_text = text_font.render(line, True, ORANGE if i == 0 else BLACK)
@@ -247,19 +386,18 @@ def start_page():
     
     pygame.display.flip()
 
-def DINO_GAME(sound_index):
-    global game_speed, x_pos_bg, y_pos_bg, points, obstacles,font,disable
+def GAME():
+    global game_speed, x_pos_bg, y_pos_bg, points, obstacles,font,disable,REACTION_TIME_AUDIO_CUE,REACTION_TIME_VISUAL_CUE
     run = True
     clock = pygame.time.Clock()
     player = Dinosaur()
     cloud = Cloud()
-    game_speed = 40
+    game_speed = 33
     x_pos_bg = 0
     y_pos_bg = 380
     points = 0
     obstacles = []
     death_count = 0
-    prev_time = time.time()
     
     def score():
         global points, game_speed
@@ -304,12 +442,6 @@ def DINO_GAME(sound_index):
             return True
         return False
     
-    def disable_jump(rect1,rect2):
-        if rect2.x - (rect1.x + rect1.width) <0:
-            return True
-        return False
-    
-    
     sound_played=True
     glow_active = False
     cue_glow_time_start=-1
@@ -348,17 +480,20 @@ def DINO_GAME(sound_index):
             
             
             if sound_played and check_upcoming_collision(player.dino_rect,obstacle.rect):
-                if sound_index==1:   
-                    soundOrVisual = random.choice([0,1])
-                    if soundOrVisual:
-                        OBSTACLE_SOUND_CUE.play()
-                        sound_played=False
-                    else:
-                        glow_active=True
-                        sound_played=False
-                        cue_glow_time_start = time.time()
-                        
-                    disable=0
+                soundOrVisual = random.choice([0,1])
+                if soundOrVisual:
+                    REACTION_TIME_AUDIO_CUE = time.time()
+                    REACTION_TIME_VISUAL_CUE=-1
+                    OBSTACLE_SOUND_CUE.play()
+                    sound_played=False
+                else:
+                    REACTION_TIME_VISUAL_CUE = time.time()
+                    REACTION_TIME_AUDIO_CUE=-1
+                    glow_active=True
+                    sound_played=False
+                    cue_glow_time_start = time.time()
+                    
+                disable=0
             
             if check_collision(player.dino_rect,obstacle.rect):
                 pygame.time.delay(2000)
@@ -375,26 +510,23 @@ def DINO_GAME(sound_index):
         clock.tick(30)
         pygame.display.update()
         
-def play_game(round_number):
-    """Main game logic for each round. Customize this function with your game code."""
-    DINO_GAME(round_number)        
+def play_game():
+    GAME()        
         
 def main():
     # Play games in 3 parts, with 2 games each
-    total_games = 3
-    games_per_part = 1
-    cntr=0
+    global CUE_DISTANCE_THRESH,new_data
+    TOTAL_GAMES = 3
+    delay_thresh_var=[350,650,500]
+    random.shuffle(delay_thresh_var)
     
-    L1 = [1]
-    L2= [1]
-    random.shuffle(L1)
-    random.shuffle(L2)
-    sound_order = L1 + L2 
-    # Main loop for START PAGE
+    pre_exp_form()
+    
     running = True
     while running:
         start_page()
         
+        # event listener        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -402,13 +534,15 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     running = False  # Exit start page and proceed to game
-
-    for part in range(1, (total_games // games_per_part) + 1):
-        for game_round in range((part - 1) * games_per_part + 1, part * games_per_part + 1):
-            wait_for_spacebar(cntr)
-            play_game(sound_order[cntr-1])
-            cntr+=1
-        print(f"Part {part} complete")
+        
+        
+    for i in range(1,TOTAL_GAMES+1):
+        CUE_DISTANCE_THRESH=delay_thresh_var[i-1]
+        wait_for_spacebar(i)
+        start_time = time.time()
+        play_game()
+        new_data["Score"].append(points)
+        new_data["Game_End_Time"].append(time.time()-start_time)
 
     print("All parts completed!")
     pygame.quit()
@@ -416,3 +550,7 @@ def main():
 # Run the game
 if __name__ == "__main__":
     main()
+    data.update(new_data)
+    print(new_data)
+    with open(JSON_FILE_PATH,'a') as file:
+        json.dump(data,file,indent=4)
