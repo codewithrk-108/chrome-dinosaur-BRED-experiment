@@ -22,6 +22,7 @@ new_data = {
         "Rating_Chrome_Dino_Game":0,
         "Game_End_Time":[],
         "Score":[],
+        "Distance_Threshold":[],
         "REACTION_TIME_AUDIO_CUE":[],
         "REACTION_TIME_VISUAL_CUE":[]
     }
@@ -137,11 +138,11 @@ class Dinosaur:
         
         if(REACTION_TIME_AUDIO_CUE!=-1):
             REACTION_TIME_AUDIO_CUE = time.time()-REACTION_TIME_AUDIO_CUE
-            new_data["REACTION_TIME_AUDIO_CUE"].append(REACTION_TIME_AUDIO_CUE)
+            new_data[str(idno)]["REACTION_TIME_AUDIO_CUE"].append(REACTION_TIME_AUDIO_CUE)
             REACTION_TIME_AUDIO_CUE=-1
         if(REACTION_TIME_VISUAL_CUE!=-1):
             REACTION_TIME_VISUAL_CUE = time.time()-REACTION_TIME_VISUAL_CUE
-            new_data["REACTION_TIME_VISUAL_CUE"].append(REACTION_TIME_VISUAL_CUE)
+            new_data[str(idno)]["REACTION_TIME_VISUAL_CUE"].append(REACTION_TIME_VISUAL_CUE)
             REACTION_TIME_VISUAL_CUE=-1
         
         # print(REACTION_TIME_VISUAL_CUE)
@@ -392,7 +393,7 @@ def GAME():
     clock = pygame.time.Clock()
     player = Dinosaur()
     cloud = Cloud()
-    game_speed = 33
+    game_speed = 45
     x_pos_bg = 0
     y_pos_bg = 380
     points = 0
@@ -423,10 +424,10 @@ def GAME():
     # added by rohan
     def check_collision(rect1, rect2):
         # Check if the rectangles do not overlap horizontally
-        if rect1.x + rect1.width-15 < rect2.x or rect2.x + rect2.width < rect1.x+15:
+        if rect1.x + rect1.width-30 < rect2.x or rect2.x + rect2.width < rect1.x+30:
             return False
         # Check if the rectangles do not overlap vertically
-        if rect1.y + rect1.height-15 < rect2.y or rect2.y + rect2.height < rect1.y+15:
+        if rect1.y + rect1.height-30 < rect2.y or rect2.y + rect2.height < rect1.y+30:
             return False
         # If neither of the above conditions are true, the rectangles must overlap
         return True
@@ -463,9 +464,9 @@ def GAME():
         player.update(userInput)
 
         if len(obstacles) == 0:
-            if random.randint(0, 2) == 0:
+            if random.randint(0, 25) == 2:
                 obstacles.append(SmallCactus(SMALL_CACTUS))
-            elif random.randint(0, 2) == 1:
+            elif random.randint(0, 25) == 18:
                 obstacles.append(LargeCactus(LARGE_CACTUS))
             # elif random.randint(0, 2) == 2:
                 # obstacles.append(Bird(BIRD))
@@ -517,10 +518,11 @@ def main():
     # Play games in 3 parts, with 2 games each
     global CUE_DISTANCE_THRESH,new_data
     TOTAL_GAMES = 3
-    delay_thresh_var=[350,650,500]
+    # delay_thresh_var=[350,650,500]
+    delay_thresh_var = [350,650,900]
     random.shuffle(delay_thresh_var)
     
-    pre_exp_form()
+    # pre_exp_form()
     
     running = True
     while running:
@@ -541,13 +543,15 @@ def main():
         wait_for_spacebar(i)
         start_time = time.time()
         play_game()
-        new_data["Score"].append(points)
-        new_data["Game_End_Time"].append(time.time()-start_time)
+        new_data[str(idno)]["Score"].append(points)
+        new_data[str(idno)]["Game_End_Time"].append(time.time()-start_time)
+        new_data[str(idno)]["Distance_Threshold"].append(CUE_DISTANCE_THRESH)
 
     print("All parts completed!")
     pygame.quit()
 
 # Run the game
+#TODO: save the data into a jsonl file
 if __name__ == "__main__":
     main()
     data.update(new_data)
