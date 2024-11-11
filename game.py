@@ -361,7 +361,12 @@ def pre_exp_form():
                 "Name": form_data["Name"],
                 "Age": form_data["Age"],
                 "Email_id": form_data["Email_id"],
-                "Rating_Chrome_Dino_Game": form_data["Rating_Chrome_Dino_Game"]
+                "Rating_Chrome_Dino_Game": form_data["Rating_Chrome_Dino_Game"],
+                "Game_End_Time":[],
+                "Score":[],
+                "Distance_Threshold":[],
+                "REACTION_TIME_AUDIO_CUE":[[],[],[]],
+                "REACTION_TIME_VISUAL_CUE":[[],[],[]]
             }
             running = False  # Exit the form to start the game
 
