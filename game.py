@@ -51,7 +51,7 @@ ROUND=0
 
 # Global Constants
 SCREEN_HEIGHT = 600
-SCREEN_WIDTH = 1500
+SCREEN_WIDTH = 1100
 disable=1
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
@@ -412,7 +412,7 @@ def GAME():
     clock = pygame.time.Clock()
     player = Dinosaur()
     cloud = Cloud()
-    game_speed = 45
+    game_speed = 40
     x_pos_bg = 0
     y_pos_bg = 380
     points = 0
@@ -529,7 +529,7 @@ def GAME():
 
         score()
         
-        clock.tick(60)
+        clock.tick(30)
         pygame.display.update()
         
 def play_game():
@@ -537,10 +537,10 @@ def play_game():
         
 def main():
     # Play games in 3 parts, with 2 games each
-    global CUE_DISTANCE_THRESH,new_data
+    global CUE_DISTANCE_THRESH,new_data,ROUND
     TOTAL_GAMES = 3
     # delay_thresh_var=[350,650,500]
-    delay_thresh_var = [350,650,1000]
+    delay_thresh_var = [350,650,500]
     random.shuffle(delay_thresh_var)
     
     # pre_exp_form()
