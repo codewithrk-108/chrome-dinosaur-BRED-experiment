@@ -36,8 +36,8 @@ new_data = {
     "Game_End_Time":[],
     "Score":[],
     "Distance_Threshold":[],
-    "REACTION_TIME_AUDIO_CUE":[],
-    "REACTION_TIME_VISUAL_CUE":[]
+    "REACTION_TIME_AUDIO_CUE":[[],[],[]],
+    "REACTION_TIME_VISUAL_CUE":[[],[],[]]
 }
 
 font = pygame.font.Font('freesansbold.ttf', 30)
@@ -47,6 +47,7 @@ OBSTACLE_SOUND_CUE = pygame.mixer.Sound("Assets/sounds/jump.wav")
 CUE_DISTANCE_THRESH = 300
 REACTION_TIME_VISUAL_CUE=0
 REACTION_TIME_AUDIO_CUE=0
+ROUND=0
 
 # Global Constants
 SCREEN_HEIGHT = 600
@@ -145,16 +146,16 @@ class Dinosaur:
         self.step_index += 1
 
     def jump(self):
-        global REACTION_TIME_AUDIO_CUE,REACTION_TIME_VISUAL_CUE,new_data
+        global REACTION_TIME_AUDIO_CUE,REACTION_TIME_VISUAL_CUE,new_data,ROUND
         
         
         if(REACTION_TIME_AUDIO_CUE!=-1):
             REACTION_TIME_AUDIO_CUE = time.time()-REACTION_TIME_AUDIO_CUE
-            new_data["REACTION_TIME_AUDIO_CUE"].append(REACTION_TIME_AUDIO_CUE)
+            new_data["REACTION_TIME_AUDIO_CUE"][ROUND].append(REACTION_TIME_AUDIO_CUE)
             REACTION_TIME_AUDIO_CUE=-1
         if(REACTION_TIME_VISUAL_CUE!=-1):
             REACTION_TIME_VISUAL_CUE = time.time()-REACTION_TIME_VISUAL_CUE
-            new_data["REACTION_TIME_VISUAL_CUE"].append(REACTION_TIME_VISUAL_CUE)
+            new_data["REACTION_TIME_VISUAL_CUE"][ROUND].append(REACTION_TIME_VISUAL_CUE)
             REACTION_TIME_VISUAL_CUE=-1
         
         # print(REACTION_TIME_VISUAL_CUE)
@@ -566,6 +567,7 @@ def main():
         new_data["Score"].append(points)
         new_data["Game_End_Time"].append(time.time()-start_time)
         new_data["Distance_Threshold"].append(CUE_DISTANCE_THRESH) #added by vatsa
+        ROUND+=1
 
     print("All parts completed!")
     pygame.quit()
