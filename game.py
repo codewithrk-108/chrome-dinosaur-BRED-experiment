@@ -529,7 +529,7 @@ def GAME():
 
         score()
         
-        clock.tick(30)
+        clock.tick(60)
         pygame.display.update()
         
 def play_game():
