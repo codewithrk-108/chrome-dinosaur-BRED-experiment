@@ -9,23 +9,35 @@ pygame.mixer.init()
 
 
 # json file path
-JSON_FILE_PATH='data_file.json'
-with open(JSON_FILE_PATH,'r') as file:
-    data = json.load(file)
+# JSON_FILE_PATH='data_file.json'
+# with open(JSON_FILE_PATH,'r') as file:
+#     data = json.load(file)
 
-idno = len(data)
+# idno = len(data)
+# new_data = {
+#     str(idno) : {
+#         "Name" : "",
+#         "Age" : "",
+#         "Email_id": "",
+#         "Rating_Chrome_Dino_Game":0,
+#         "Game_End_Time":[],
+#         "Score":[],
+#         "Distance_Threshold":[],
+#         "REACTION_TIME_AUDIO_CUE":[],
+#         "REACTION_TIME_VISUAL_CUE":[]
+#     }
+# }
+# added by vatsa
 new_data = {
-    str(idno) : {
-        "Name" : "",
-        "Age" : "",
-        "Email_id": "",
-        "Rating_Chrome_Dino_Game":0,
-        "Game_End_Time":[],
-        "Score":[],
-        "Distance_Threshold":[],
-        "REACTION_TIME_AUDIO_CUE":[],
-        "REACTION_TIME_VISUAL_CUE":[]
-    }
+    "Name" : "",
+    "Age" : "",
+    "Email_id": "",
+    "Rating_Chrome_Dino_Game":0,
+    "Game_End_Time":[],
+    "Score":[],
+    "Distance_Threshold":[],
+    "REACTION_TIME_AUDIO_CUE":[],
+    "REACTION_TIME_VISUAL_CUE":[]
 }
 
 font = pygame.font.Font('freesansbold.ttf', 30)
@@ -38,7 +50,7 @@ REACTION_TIME_AUDIO_CUE=0
 
 # Global Constants
 SCREEN_HEIGHT = 600
-SCREEN_WIDTH = 1100
+SCREEN_WIDTH = 1500
 disable=1
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
@@ -138,11 +150,11 @@ class Dinosaur:
         
         if(REACTION_TIME_AUDIO_CUE!=-1):
             REACTION_TIME_AUDIO_CUE = time.time()-REACTION_TIME_AUDIO_CUE
-            new_data[str(idno)]["REACTION_TIME_AUDIO_CUE"].append(REACTION_TIME_AUDIO_CUE)
+            new_data["REACTION_TIME_AUDIO_CUE"].append(REACTION_TIME_AUDIO_CUE)
             REACTION_TIME_AUDIO_CUE=-1
         if(REACTION_TIME_VISUAL_CUE!=-1):
             REACTION_TIME_VISUAL_CUE = time.time()-REACTION_TIME_VISUAL_CUE
-            new_data[str(idno)]["REACTION_TIME_VISUAL_CUE"].append(REACTION_TIME_VISUAL_CUE)
+            new_data["REACTION_TIME_VISUAL_CUE"].append(REACTION_TIME_VISUAL_CUE)
             REACTION_TIME_VISUAL_CUE=-1
         
         # print(REACTION_TIME_VISUAL_CUE)
@@ -338,7 +350,13 @@ def pre_exp_form():
 
         # Check if submit button was clicked
         if event.type == pygame.MOUSEBUTTONDOWN and submit_button.collidepoint(event.pos):
-            new_data[str(idno)] = {
+            # new_data[str(idno)] = {
+            #     "Name": form_data["Name"],
+            #     "Age": form_data["Age"],
+            #     "Email_id": form_data["Email_id"],
+            #     "Rating_Chrome_Dino_Game": form_data["Rating_Chrome_Dino_Game"]
+            # }
+            new_data = {
                 "Name": form_data["Name"],
                 "Age": form_data["Age"],
                 "Email_id": form_data["Email_id"],
@@ -403,8 +421,9 @@ def GAME():
     def score():
         global points, game_speed
         points += 1
-        if points % 100 == 0:
-            game_speed += 2
+        # constant game speed; added by vatsa
+        # if points % 100 == 0:
+        #     game_speed += 2
 
         text = font.render("Points: " + str(points), True, (0, 0, 0))
         textRect = text.get_rect()
@@ -423,11 +442,12 @@ def GAME():
     
     # added by rohan
     def check_collision(rect1, rect2):
+        #threshold changed by vatsa
         # Check if the rectangles do not overlap horizontally
-        if rect1.x + rect1.width-30 < rect2.x or rect2.x + rect2.width < rect1.x+30:
+        if rect1.x + rect1.width-15 < rect2.x or rect2.x + rect2.width < rect1.x+15:
             return False
         # Check if the rectangles do not overlap vertically
-        if rect1.y + rect1.height-30 < rect2.y or rect2.y + rect2.height < rect1.y+30:
+        if rect1.y + rect1.height-15 < rect2.y or rect2.y + rect2.height < rect1.y+15:
             return False
         # If neither of the above conditions are true, the rectangles must overlap
         return True
@@ -519,7 +539,7 @@ def main():
     global CUE_DISTANCE_THRESH,new_data
     TOTAL_GAMES = 3
     # delay_thresh_var=[350,650,500]
-    delay_thresh_var = [350,650,900]
+    delay_thresh_var = [350,650,1000]
     random.shuffle(delay_thresh_var)
     
     # pre_exp_form()
@@ -543,9 +563,9 @@ def main():
         wait_for_spacebar(i)
         start_time = time.time()
         play_game()
-        new_data[str(idno)]["Score"].append(points)
-        new_data[str(idno)]["Game_End_Time"].append(time.time()-start_time)
-        new_data[str(idno)]["Distance_Threshold"].append(CUE_DISTANCE_THRESH)
+        new_data["Score"].append(points)
+        new_data["Game_End_Time"].append(time.time()-start_time)
+        new_data["Distance_Threshold"].append(CUE_DISTANCE_THRESH) #added by vatsa
 
     print("All parts completed!")
     pygame.quit()
@@ -554,7 +574,13 @@ def main():
 #TODO: save the data into a jsonl file
 if __name__ == "__main__":
     main()
-    data.update(new_data)
+    # data.update(new_data)
+    data = new_data
     print(new_data)
-    with open(JSON_FILE_PATH,'a') as file:
-        json.dump(data,file,indent=4)
+    # with open(JSON_FILE_PATH,'a') as file:
+    #     json.dump(data,file,indent=4)
+
+    # save in jsonl format; added by vatsa
+    import jsonlines
+    with jsonlines.open('data_file.jsonl', mode='a') as writer:
+        writer.write(new_data)
