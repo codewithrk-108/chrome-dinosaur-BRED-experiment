@@ -91,10 +91,11 @@ class Dinosaur:
     Y_POS_DUCK = 340
     JUMP_VEL = 8.5
 
-    def __init__(self):
+    def __init__(self,is_practice):
         self.duck_img = DUCKING
         self.run_img = RUNNING
         self.jump_img = JUMPING
+        self.is_practice = is_practice
 
         self.dino_duck = False
         self.dino_run = True
@@ -151,11 +152,13 @@ class Dinosaur:
         
         if(REACTION_TIME_AUDIO_CUE!=-1):
             REACTION_TIME_AUDIO_CUE = time.time()-REACTION_TIME_AUDIO_CUE
-            new_data["REACTION_TIME_AUDIO_CUE"][ROUND].append(REACTION_TIME_AUDIO_CUE)
+            if self.is_practice:
+                new_data["REACTION_TIME_AUDIO_CUE"][ROUND].append(REACTION_TIME_AUDIO_CUE)
             REACTION_TIME_AUDIO_CUE=-1
         if(REACTION_TIME_VISUAL_CUE!=-1):
             REACTION_TIME_VISUAL_CUE = time.time()-REACTION_TIME_VISUAL_CUE
-            new_data["REACTION_TIME_VISUAL_CUE"][ROUND].append(REACTION_TIME_VISUAL_CUE)
+            if self.is_practice:
+                new_data["REACTION_TIME_VISUAL_CUE"][ROUND].append(REACTION_TIME_VISUAL_CUE)
             REACTION_TIME_VISUAL_CUE=-1
         
         # print(REACTION_TIME_VISUAL_CUE)
@@ -243,12 +246,15 @@ class Bird(Obstacle):
         SCREEN.blit(self.image[self.index//5], self.rect)
         self.index += 1
 
-def wait_for_spacebar(game_no):
+def wait_for_spacebar(game_no,is_practice_round=1):
     """Wait for the spacebar to start each game round."""
     waiting = True
     while waiting:
         SCREEN.fill(BLACK)
-        text = font.render(f"Press SPACE to start the game {game_no}.", True, WHITE)
+        if is_practice_round==0:
+            text = font.render(f"Press SPACE to start Practice game {game_no}.", True, WHITE)
+        else:
+            text = font.render(f"Press SPACE to start the game {game_no}.", True, WHITE)
         SCREEN.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, SCREEN_HEIGHT // 2 - text.get_height() // 2))
         pygame.display.flip()
         
@@ -361,12 +367,7 @@ def pre_exp_form():
                 "Name": form_data["Name"],
                 "Age": form_data["Age"],
                 "Email_id": form_data["Email_id"],
-                "Rating_Chrome_Dino_Game": form_data["Rating_Chrome_Dino_Game"],
-                "Game_End_Time":[],
-                "Score":[],
-                "Distance_Threshold":[],
-                "REACTION_TIME_AUDIO_CUE":[[],[],[]],
-                "REACTION_TIME_VISUAL_CUE":[[],[],[]]
+                "Rating_Chrome_Dino_Game": form_data["Rating_Chrome_Dino_Game"]
             }
             running = False  # Exit the form to start the game
 
@@ -411,13 +412,13 @@ def start_page():
     
     pygame.display.flip()
 
-def GAME():
+def GAME(is_practice=1):
     global game_speed, x_pos_bg, y_pos_bg, points, obstacles,font,disable,REACTION_TIME_AUDIO_CUE,REACTION_TIME_VISUAL_CUE
     run = True
     clock = pygame.time.Clock()
-    player = Dinosaur()
+    player = Dinosaur(is_practice)
     cloud = Cloud()
-    game_speed = 40
+    game_speed = 42
     x_pos_bg = 0
     y_pos_bg = 380
     points = 0
@@ -473,17 +474,22 @@ def GAME():
     glow_active = False
     cue_glow_time_start=-1
     while run:
-        if disable==0:
+        if is_practice==0 or disable==0:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     run = False
-        
-        if glow_active and time.time()-cue_glow_time_start<0.14:
-            # RED with 50% transparency
-            SCREEN.fill((255,0,0,128))
+                    
+        if is_practice:
+            if glow_active and time.time()-cue_glow_time_start<0.14:
+                # RED with 50% transparency
+                SCREEN.fill((255,0,0,128))
+            else:
+                SCREEN.fill((255, 255, 255))
+                glow_active = False
         else:
             SCREEN.fill((255, 255, 255))
             glow_active = False
+                
         userInput = pygame.key.get_pressed()
 
         player.draw(SCREEN)
@@ -494,36 +500,34 @@ def GAME():
                 obstacles.append(SmallCactus(SMALL_CACTUS))
             elif random.randint(0, 25) == 18:
                 obstacles.append(LargeCactus(LARGE_CACTUS))
-            # elif random.randint(0, 2) == 2:
-                # obstacles.append(Bird(BIRD))
-        
         
         for obstacle in obstacles:
             obstacle.draw(SCREEN)
             obstacle.update()
             
-            if sound_played== False:
-                sound_played = reset_sound(player.dino_rect,obstacle.rect)
-            
-            
-            if sound_played and check_upcoming_collision(player.dino_rect,obstacle.rect):
-                soundOrVisual = random.choice([0,1])
-                if soundOrVisual:
-                    REACTION_TIME_AUDIO_CUE = time.time()
-                    REACTION_TIME_VISUAL_CUE=-1
-                    OBSTACLE_SOUND_CUE.play()
-                    sound_played=False
-                else:
-                    REACTION_TIME_VISUAL_CUE = time.time()
-                    REACTION_TIME_AUDIO_CUE=-1
-                    glow_active=True
-                    sound_played=False
-                    cue_glow_time_start = time.time()
-                    
-                disable=0
+            if is_practice:
+                if sound_played== False:
+                    sound_played = reset_sound(player.dino_rect,obstacle.rect)
+                
+                
+                if sound_played and check_upcoming_collision(player.dino_rect,obstacle.rect):
+                    soundOrVisual = random.choice([0,1])
+                    if soundOrVisual:
+                        REACTION_TIME_AUDIO_CUE = time.time()
+                        REACTION_TIME_VISUAL_CUE=-1
+                        OBSTACLE_SOUND_CUE.play()
+                        sound_played=False
+                    else:
+                        REACTION_TIME_VISUAL_CUE = time.time()
+                        REACTION_TIME_AUDIO_CUE=-1
+                        glow_active=True
+                        sound_played=False
+                        cue_glow_time_start = time.time()
+                        
+                    disable=0
             
             if check_collision(player.dino_rect,obstacle.rect):
-                pygame.time.delay(2000)
+                pygame.time.delay(1000)
                 death_count += 1
                 return -1
                 
@@ -535,10 +539,14 @@ def GAME():
         score()
         
         clock.tick(30)
+        
         pygame.display.update()
         
-def play_game():
-    GAME()        
+        if points>=2500:
+            return -1
+        
+def play_game(is_practice=1):
+    GAME(is_practice)        
         
 def main():
     # Play games in 3 parts, with 2 games each
@@ -548,7 +556,7 @@ def main():
     delay_thresh_var = [350,650,500]
     random.shuffle(delay_thresh_var)
     
-    pre_exp_form()
+    # pre_exp_form()
     
     running = True
     while running:
@@ -563,6 +571,16 @@ def main():
                 if event.key == pygame.K_SPACE:
                     running = False  # Exit start page and proceed to game
         
+    # two practice rounds
+    for i in range(1,3):
+        # CUE_DISTANCE_THRESH=delay_thresh_var[i-1]
+        wait_for_spacebar(i,0)
+        # start_time = time.time()
+        play_game(0)
+        # new_data["Score"].append(points)
+        # new_data["Game_End_Time"].append(time.time()-start_time)
+        # new_data["Distance_Threshold"].append(CUE_DISTANCE_THRESH) #added by vatsa
+        # ROUND+=1
         
     for i in range(1,TOTAL_GAMES+1):
         CUE_DISTANCE_THRESH=delay_thresh_var[i-1]
