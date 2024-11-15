@@ -556,7 +556,7 @@ def main():
     delay_thresh_var = [350,650,500]
     random.shuffle(delay_thresh_var)
     
-    pre_exp_form()
+    # pre_exp_form()
     
     running = True
     while running:
